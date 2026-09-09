@@ -1,4 +1,4 @@
-﻿-- CreateEnum
+-- CreateEnum
 CREATE TYPE "EmailJobStatus" AS ENUM ('SCHEDULED', 'SENT', 'FAILED');
 
 -- CreateTable
