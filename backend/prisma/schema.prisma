@@ -1,0 +1,71 @@
+// backend/prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum EmailJobStatus {
+  SCHEDULED
+  SENT
+  FAILED
+}
+
+model User {
+  id                String             @id @default(uuid())
+  googleId          String?            @unique
+  email             String             @unique
+  name              String?
+  avatarUrl         String?
+  createdAt         DateTime           @default(now())
+  senders           Sender[]
+  emailJobs         EmailJob[]
+  slackIntegrations SlackIntegration[]
+}
+
+model Sender {
+  id        String     @id @default(uuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  fromEmail String
+  createdAt DateTime   @default(now())
+  emailJobs EmailJob[]
+}
+
+model EmailJob {
+  id             String         @id @default(uuid())
+  userId         String
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         Sender         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  subject        String
+  body           String
+  recipientEmail String
+  scheduledAt    DateTime
+  status         EmailJobStatus @default(SCHEDULED)
+  sentAt         DateTime?
+  errorMessage   String?
+  bullJobId      String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([status])
+  @@index([scheduledAt])
+  @@index([senderId, status])
+}
+
+model SlackIntegration {
+  id                 String   @id @default(uuid())
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  teamId             String
+  accessToken        String
+  incomingWebhookUrl String?
+  channelId          String?
+  connectedAt        DateTime @default(now())
+}

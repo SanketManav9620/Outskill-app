@@ -1,0 +1,25 @@
+{
+  "name": "monorepo-root",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Root workspace configuration for backend and frontend services",
+  "scripts": {
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:worker": "cd backend && npm run worker",
+    "create-ethereal": "cd backend && npm run create-ethereal",
+    "test:batch": "cd backend && npm run test:batch",
+    "test:error": "cd backend && npm run test:error",
+    "test:load": "cd backend && npm run test:load",
+    "build:backend": "cd backend && npm run build",
+    "build:frontend": "cd frontend && npm run build",
+    "lint": "cd backend && npm run lint && cd ../frontend && npm run lint",
+    "format": "cd backend && npm run format && cd ../frontend && npm run format",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down"
+  },
+  "workspaces": [
+    "backend",
+    "frontend"
+  ]
+}
