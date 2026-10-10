@@ -11,9 +11,11 @@ import {
   Clock,
   CheckCircle2,
   AlertCircle,
-  Mail,
-  RefreshCw,
   X,
+  Send,
+  ShieldCheck,
+  Zap,
+  Layers,
 } from 'lucide-react';
 
 export interface EmailJobItem {
@@ -44,21 +46,60 @@ export default function DashboardPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastError, setToastError] = useState<string | null>(null);
 
+  // Live Metrics State
+  const [metrics, setMetrics] = useState({
+    scheduledCount: 0,
+    sentCount: 0,
+    failedCount: 0,
+  });
+
+  const fetchMetrics = useCallback(async () => {
+    try {
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const [schedRes, sentRes, failRes] = await Promise.all([
+        fetch(`${backendUrl}/api/emails?status=scheduled&limit=1`, { headers: { 'x-user-id': 'demo-user-id' } }),
+        fetch(`${backendUrl}/api/emails?status=sent&limit=1`, { headers: { 'x-user-id': 'demo-user-id' } }),
+        fetch(`${backendUrl}/api/emails?status=failed&limit=1`, { headers: { 'x-user-id': 'demo-user-id' } }),
+      ]);
+
+      if (schedRes.ok && sentRes.ok && failRes.ok) {
+        const [schedData, sentData, failData] = await Promise.all([
+          schedRes.json(),
+          sentRes.json(),
+          failRes.json(),
+        ]);
+        setMetrics({
+          scheduledCount: schedData.totalCount ?? (schedData.data?.length || 0),
+          sentCount: sentData.totalCount ?? (sentData.data?.length || 0),
+          failedCount: failData.totalCount ?? (failData.data?.length || 0),
+        });
+      }
+    } catch (err) {
+      // silent fetch failure for metrics
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchMetrics();
+    const interval = setInterval(fetchMetrics, 5000);
+    return () => clearInterval(interval);
+  }, [fetchMetrics]);
+
   const handleComposeSuccess = (count: number) => {
-    setToastMessage(`🎉 Successfully scheduled ${count} email job(s)!`);
+    setToastMessage(`Successfully scheduled ${count} email job(s)!`);
+    fetchMetrics();
     setTimeout(() => {
       setToastMessage(null);
     }, 5000);
   };
 
   const handleFetchError = (err: Error) => {
-    setToastError(`⚠️ Error: ${err.message || 'An unexpected error occurred'}`);
+    setToastError(`Error: ${err.message || 'An unexpected error occurred'}`);
     setTimeout(() => {
       setToastError(null);
     }, 5000);
   };
 
-  // Perform Elasticsearch search when searchQuery changes
   const executeSearch = useCallback(async () => {
     if (!searchQuery.trim()) {
       setSearchResults([]);
@@ -120,15 +161,15 @@ export default function DashboardPage() {
     {
       key: 'recipientEmail',
       header: 'Recipient',
-      render: (row) => <span className="font-medium text-white">{row.recipientEmail}</span>,
+      render: (row) => <span className="font-semibold text-[#23456c]">{row.recipientEmail}</span>,
     },
     {
       key: 'subject',
       header: 'Subject & Content',
       render: (row) => (
         <div className="max-w-xs">
-          <p className="font-semibold text-white truncate">{row.subject}</p>
-          <p className="text-[11px] text-slate-400 truncate mt-0.5">{row.body}</p>
+          <p className="font-medium text-[#23456c] truncate">{row.subject}</p>
+          <p className="text-[11px] text-[#627289] truncate mt-0.5">{row.body}</p>
         </div>
       ),
     },
@@ -136,7 +177,7 @@ export default function DashboardPage() {
       key: 'scheduledAt',
       header: 'Timestamp',
       render: (row) => (
-        <span className="text-slate-400">
+        <span className="text-[#627289]">
           {new Date(row.sentAt || row.scheduledAt).toLocaleString()}
         </span>
       ),
@@ -146,12 +187,12 @@ export default function DashboardPage() {
       header: 'Status',
       render: (row) => (
         <span
-          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold border ${
+          className={`inline-flex items-center gap-1 rounded-md px-2.5 py-0.5 text-[11px] font-semibold border ${
             row.status === 'SCHEDULED'
-              ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20'
+              ? 'bg-[#6e2a7e]/10 text-[#6e2a7e] border-[#6e2a7e]/20'
               : row.status === 'SENT'
-              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-              : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+              ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+              : 'bg-rose-50 text-rose-800 border-rose-200'
           }`}
         >
           {row.status === 'SCHEDULED' && <Clock className="h-3 w-3" />}
@@ -174,31 +215,111 @@ export default function DashboardPage() {
       slackTeamName={slackTeamName}
       onConnectSlack={handleConnectSlack}
     >
-      {/* Content Container */}
       <div className="space-y-6">
         
+        {/* Real Analytical Stats Cards Bar (Fills empty dashboard space) */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          
+          {/* Stat 1: Scheduled Queue */}
+          <div
+            onClick={() => setActiveTab('scheduled')}
+            className={`cursor-pointer rounded-2xl border p-4 transition-all ${
+              activeTab === 'scheduled'
+                ? 'border-[#6e2a7e] bg-[#ffffff] shadow-md ring-1 ring-[#6e2a7e]'
+                : 'border-[#e2deea] bg-[#ffffff] hover:border-[#6e2a7e]/40'
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-[#627289]">Scheduled Queue</span>
+              <div className="rounded-lg bg-[#6e2a7e]/10 p-2 text-[#6e2a7e]">
+                <Clock className="h-4 w-4" />
+              </div>
+            </div>
+            <div className="mt-3 flex items-baseline justify-between">
+              <span className="text-2xl font-extrabold text-[#23456c]">{metrics.scheduledCount}</span>
+              <span className="text-[11px] font-semibold text-[#6e2a7e]">Pending Jobs</span>
+            </div>
+          </div>
+
+          {/* Stat 2: Sent History */}
+          <div
+            onClick={() => setActiveTab('sent')}
+            className={`cursor-pointer rounded-2xl border p-4 transition-all ${
+              activeTab === 'sent'
+                ? 'border-[#6e2a7e] bg-[#ffffff] shadow-md ring-1 ring-[#6e2a7e]'
+                : 'border-[#e2deea] bg-[#ffffff] hover:border-[#6e2a7e]/40'
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-[#627289]">Delivered History</span>
+              <div className="rounded-lg bg-emerald-50 p-2 text-emerald-700">
+                <Send className="h-4 w-4" />
+              </div>
+            </div>
+            <div className="mt-3 flex items-baseline justify-between">
+              <span className="text-2xl font-extrabold text-[#23456c]">{metrics.sentCount}</span>
+              <span className="text-[11px] font-semibold text-emerald-700">Dispatched</span>
+            </div>
+          </div>
+
+          {/* Stat 3: Failed Logs */}
+          <div
+            onClick={() => setActiveTab('failed')}
+            className={`cursor-pointer rounded-2xl border p-4 transition-all ${
+              activeTab === 'failed'
+                ? 'border-rose-500 bg-[#ffffff] shadow-md ring-1 ring-rose-500'
+                : 'border-[#e2deea] bg-[#ffffff] hover:border-rose-300'
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-[#627289]">Failed Jobs</span>
+              <div className="rounded-lg bg-rose-50 p-2 text-rose-700">
+                <AlertCircle className="h-4 w-4" />
+              </div>
+            </div>
+            <div className="mt-3 flex items-baseline justify-between">
+              <span className="text-2xl font-extrabold text-[#23456c]">{metrics.failedCount}</span>
+              <span className="text-[11px] font-semibold text-rose-700">Needs Review</span>
+            </div>
+          </div>
+
+          {/* Stat 4: Hourly Sender Rate Cap */}
+          <div className="rounded-2xl border border-[#e2deea] bg-[#ffffff] p-4">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-[#627289]">Sender Throttling Rate</span>
+              <div className="rounded-lg bg-[#5e80c4]/10 p-2 text-[#5e80c4]">
+                <Zap className="h-4 w-4" />
+              </div>
+            </div>
+            <div className="mt-3 flex items-baseline justify-between">
+              <span className="text-2xl font-extrabold text-[#23456c]">100 <span className="text-xs font-normal text-[#627289]">/ hr</span></span>
+              <span className="text-[11px] font-semibold text-[#5e80c4]">Concurrency: 5</span>
+            </div>
+          </div>
+        </div>
+
         {/* Table Control Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold capitalize text-white flex items-center gap-2">
-              {activeTab === 'scheduled' && <Clock className="h-5 w-5 text-cyan-400" />}
-              {activeTab === 'sent' && <CheckCircle2 className="h-5 w-5 text-emerald-400" />}
-              {activeTab === 'failed' && <AlertCircle className="h-5 w-5 text-rose-400" />}
+            <h2 className="text-lg font-bold capitalize text-[#23456c] flex items-center gap-2">
+              {activeTab === 'scheduled' && <Clock className="h-5 w-5 text-[#6e2a7e]" />}
+              {activeTab === 'sent' && <CheckCircle2 className="h-5 w-5 text-emerald-600" />}
+              {activeTab === 'failed' && <AlertCircle className="h-5 w-5 text-rose-600" />}
               <span>{activeTab} Email Jobs</span>
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
-              {searchQuery ? `Search results for "${searchQuery}"` : `SWR 5s Polling Active for ${activeTab} queue items`}
+            <p className="text-xs text-[#627289] mt-0.5">
+              {searchQuery ? `Filter query: "${searchQuery}"` : `Displaying active items in ${activeTab} queue`}
             </p>
           </div>
         </div>
 
-        {/* Conditional Table Rendering: SWR Polled Tables or Search DataTable */}
+        {/* Main Table View */}
         {searchQuery.trim() !== '' ? (
           <DataTable
             columns={searchColumns}
             rows={searchResults}
             isLoading={isSearching}
-            emptyMessage={`No jobs matched query "${searchQuery}".`}
+            emptyMessage={`No email jobs match "${searchQuery}".`}
           />
         ) : activeTab === 'scheduled' ? (
           <ScheduledEmailsTable onError={handleFetchError} />
@@ -211,12 +332,12 @@ export default function DashboardPage() {
 
       {/* Toast Success Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl border border-emerald-500/40 bg-slate-900/95 px-5 py-3.5 text-xs font-semibold text-emerald-400 shadow-2xl shadow-emerald-500/20 backdrop-blur-xl animate-in fade-in slide-in-from-bottom-5 duration-300">
-          <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0" />
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-xl border border-emerald-300 bg-[#ffffff] px-4 py-3 text-xs font-semibold text-emerald-800 shadow-lg">
+          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
           <span>{toastMessage}</span>
           <button
             onClick={() => setToastMessage(null)}
-            className="ml-2 rounded-lg p-1 text-slate-400 hover:bg-slate-800 hover:text-white"
+            className="ml-2 rounded-md p-1 text-[#627289] hover:bg-[#c7bcd3]/40 hover:text-[#23456c]"
           >
             <X className="h-4 w-4" />
           </button>
@@ -225,12 +346,12 @@ export default function DashboardPage() {
 
       {/* Toast Error Notification */}
       {toastError && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl border border-rose-500/40 bg-slate-900/95 px-5 py-3.5 text-xs font-semibold text-rose-400 shadow-2xl shadow-rose-500/20 backdrop-blur-xl animate-in fade-in slide-in-from-bottom-5 duration-300">
-          <AlertCircle className="h-5 w-5 text-rose-400 shrink-0" />
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-xl border border-rose-300 bg-[#ffffff] px-4 py-3 text-xs font-semibold text-rose-800 shadow-lg">
+          <AlertCircle className="h-4 w-4 text-rose-600 shrink-0" />
           <span>{toastError}</span>
           <button
             onClick={() => setToastError(null)}
-            className="ml-2 rounded-lg p-1 text-slate-400 hover:bg-slate-800 hover:text-white"
+            className="ml-2 rounded-md p-1 text-[#627289] hover:bg-[#c7bcd3]/40 hover:text-[#23456c]"
           >
             <X className="h-4 w-4" />
           </button>

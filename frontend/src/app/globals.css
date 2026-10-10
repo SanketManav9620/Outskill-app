@@ -3,13 +3,20 @@
 @tailwind utilities;
 
 :root {
-  --background: #090d16;
-  --foreground: #f3f4f6;
+  --bg-main: #f8f7fa;
+  --bg-card: #ffffff;
+  --bg-[#c7bcd3]: #c7bcd3;
+  --text-dark: #23456c;
+  --brand-purple: #6e2a7e;
+  --brand-purple-hover: #582165;
+  --accent-blue: #5e80c4;
+  --border-soft: #e2deea;
+  --text-muted: #627289;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  color: var(--text-dark);
+  background-color: var(--bg-main);
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   min-height: 100vh;
 }

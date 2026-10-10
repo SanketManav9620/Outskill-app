@@ -42,15 +42,15 @@ export function ScheduledEmailsTable({ onError }: ScheduledEmailsTableProps) {
     {
       key: 'recipientEmail',
       header: 'Recipient',
-      render: (row) => <span className="font-medium text-white">{row.recipientEmail}</span>,
+      render: (row) => <span className="font-semibold text-[#23456c]">{row.recipientEmail}</span>,
     },
     {
       key: 'subject',
       header: 'Subject & Content',
       render: (row) => (
         <div className="max-w-xs">
-          <p className="font-semibold text-white truncate">{row.subject}</p>
-          <p className="text-[11px] text-slate-400 truncate mt-0.5">{row.body}</p>
+          <p className="font-medium text-[#23456c] truncate">{row.subject}</p>
+          <p className="text-[11px] text-[#627289] truncate mt-0.5">{row.body}</p>
         </div>
       ),
     },
@@ -58,7 +58,7 @@ export function ScheduledEmailsTable({ onError }: ScheduledEmailsTableProps) {
       key: 'scheduledAt',
       header: 'Scheduled Time',
       render: (row) => (
-        <span className="text-slate-400">
+        <span className="text-[#627289]">
           {new Date(row.scheduledAt).toLocaleString()}
         </span>
       ),
@@ -67,7 +67,7 @@ export function ScheduledEmailsTable({ onError }: ScheduledEmailsTableProps) {
       key: 'status',
       header: 'Status',
       render: (row) => (
-        <span className="inline-flex items-center gap-1 rounded-full bg-cyan-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-cyan-400 border border-cyan-500/20">
+        <span className="inline-flex items-center gap-1 rounded-md bg-[#6e2a7e]/10 px-2.5 py-0.5 text-[11px] font-semibold text-[#6e2a7e] border border-[#6e2a7e]/20">
           <Clock className="h-3 w-3" /> Scheduled
         </span>
       ),

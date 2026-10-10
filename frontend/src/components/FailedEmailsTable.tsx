@@ -42,15 +42,15 @@ export function FailedEmailsTable({ onError }: FailedEmailsTableProps) {
     {
       key: 'recipientEmail',
       header: 'Recipient',
-      render: (row) => <span className="font-medium text-white">{row.recipientEmail}</span>,
+      render: (row) => <span className="font-semibold text-[#23456c]">{row.recipientEmail}</span>,
     },
     {
       key: 'subject',
       header: 'Subject & Content',
       render: (row) => (
         <div className="max-w-xs">
-          <p className="font-semibold text-white truncate">{row.subject}</p>
-          <p className="text-[11px] text-slate-400 truncate mt-0.5">{row.body}</p>
+          <p className="font-medium text-[#23456c] truncate">{row.subject}</p>
+          <p className="text-[11px] text-[#627289] truncate mt-0.5">{row.body}</p>
         </div>
       ),
     },
@@ -58,7 +58,7 @@ export function FailedEmailsTable({ onError }: FailedEmailsTableProps) {
       key: 'errorMessage',
       header: 'Error',
       render: (row) => (
-        <span className="text-rose-400 text-[11px] truncate max-w-xs block">
+        <span className="text-rose-600 font-medium text-[11px] truncate max-w-xs block">
           {row.errorMessage || 'Unknown error'}
         </span>
       ),
@@ -67,7 +67,7 @@ export function FailedEmailsTable({ onError }: FailedEmailsTableProps) {
       key: 'status',
       header: 'Status',
       render: (row) => (
-        <span className="inline-flex items-center gap-1 rounded-full bg-rose-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-rose-400 border border-rose-500/20">
+        <span className="inline-flex items-center gap-1 rounded-md bg-rose-50 px-2.5 py-0.5 text-[11px] font-semibold text-rose-800 border border-rose-200">
           <AlertCircle className="h-3 w-3" /> Failed
         </span>
       ),

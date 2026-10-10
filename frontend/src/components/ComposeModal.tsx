@@ -12,7 +12,6 @@ import {
   AlertCircle,
   CheckCircle2,
   Trash2,
-  Sparkles,
   Clock,
   Zap,
 } from 'lucide-react';
@@ -101,7 +100,6 @@ export function ComposeModal({ isOpen, onClose, onSuccess, onError }: ComposeMod
         },
       });
     } else {
-      // TXT file or fallback
       const reader = new FileReader();
       reader.onload = (event) => {
         const content = event.target?.result as string;
@@ -123,10 +121,6 @@ export function ComposeModal({ isOpen, onClose, onSuccess, onError }: ComposeMod
 
   const handleRemoveInvalidRows = () => {
     setInvalidRows([]);
-  };
-
-  const handleRemoveValidEmail = (emailToRemove: string) => {
-    setValidEmails((prev) => prev.filter((e) => e !== emailToRemove));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -169,7 +163,6 @@ export function ComposeModal({ isOpen, onClose, onSuccess, onError }: ComposeMod
       const responseData = await res.json();
       const count = responseData.count || validEmails.length;
 
-      // Reset form fields
       setSubject('');
       setBody('');
       setValidEmails([]);
@@ -187,26 +180,25 @@ export function ComposeModal({ isOpen, onClose, onSuccess, onError }: ComposeMod
     }
   };
 
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto">
-      <div className="relative my-8 w-full max-w-2xl rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#23456c]/30 p-4 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto">
+      <div className="relative my-8 w-full max-w-2xl rounded-2xl border border-[#e2deea] bg-[#ffffff] p-6 shadow-2xl text-[#23456c]">
         
         {/* Modal Header */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div className="flex items-center justify-between border-b border-[#e2deea] pb-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-md shadow-cyan-500/20">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#6e2a7e] text-white">
               <Mail className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-white">Compose & Schedule Batch Emails</h2>
-              <p className="text-xs text-slate-400">CSV/TXT recipient upload, stagger delay, & rate limit controls</p>
+              <h2 className="text-lg font-bold text-[#23456c]">Compose & Schedule Batch Emails</h2>
+              <p className="text-xs text-[#627289]">Recipient import, stagger delay & rate limits</p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+            className="rounded-lg p-1.5 text-[#627289] hover:bg-[#f8f7fa] hover:text-[#23456c] transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
@@ -214,19 +206,19 @@ export function ComposeModal({ isOpen, onClose, onSuccess, onError }: ComposeMod
 
         {/* Modal Error Alert */}
         {error && (
-          <div className="mt-4 flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 p-3.5 text-xs text-red-400">
+          <div className="mt-4 flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3.5 text-xs text-rose-800">
             <AlertCircle className="h-4 w-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
-        {/* Compose Form */}
+        {/* Form Body */}
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           
-          {/* Subject & Sender ID Row */}
+          {/* Subject & Sender ID */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="sm:col-span-2">
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-[#23456c] mb-1">
                 Subject Line
               </label>
               <input
@@ -235,13 +227,13 @@ export function ComposeModal({ isOpen, onClose, onSuccess, onError }: ComposeMod
                 required
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
-                placeholder="e.g. Quarterly Product Update"
-                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                placeholder="e.g. Outskill Product Launch Update"
+                className="w-full rounded-xl border border-[#e2deea] bg-[#f8f7fa] px-3.5 py-2 text-xs text-[#23456c] placeholder-[#627289] focus:border-[#6e2a7e] focus:outline-none focus:ring-1 focus:ring-[#6e2a7e]"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-[#23456c] mb-1">
                 Sender ID
               </label>
               <input
@@ -251,15 +243,15 @@ export function ComposeModal({ isOpen, onClose, onSuccess, onError }: ComposeMod
                 value={senderId}
                 onChange={(e) => setSenderId(e.target.value)}
                 placeholder="sender-1"
-                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                className="w-full rounded-xl border border-[#e2deea] bg-[#f8f7fa] px-3.5 py-2 text-xs text-[#23456c] placeholder-[#627289] focus:border-[#6e2a7e] focus:outline-none focus:ring-1 focus:ring-[#6e2a7e]"
               />
             </div>
           </div>
 
           {/* Email Body */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">
-              Email Content (HTML / Plaintext)
+            <label className="block text-xs font-semibold text-[#23456c] mb-1">
+              Email Content
             </label>
             <textarea
               id="compose-body"
@@ -268,30 +260,27 @@ export function ComposeModal({ isOpen, onClose, onSuccess, onError }: ComposeMod
               value={body}
               onChange={(e) => setBody(e.target.value)}
               placeholder="Write your email body message here..."
-              className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+              className="w-full rounded-xl border border-[#e2deea] bg-[#f8f7fa] px-3.5 py-2 text-xs text-[#23456c] placeholder-[#627289] focus:border-[#6e2a7e] focus:outline-none focus:ring-1 focus:ring-[#6e2a7e]"
             />
           </div>
 
           {/* Recipient File Upload Section */}
-          <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4 space-y-3">
+          <div className="rounded-xl border border-[#e2deea] bg-[#f8f7fa] p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                <FileText className="h-4 w-4 text-cyan-400" />
+              <label className="text-xs font-semibold text-[#23456c] flex items-center gap-1.5">
+                <FileText className="h-4 w-4 text-[#5e80c4]" />
                 <span>Recipients (CSV / TXT Upload)</span>
               </label>
 
-              {/* Status Badge */}
-              <div className="flex items-center gap-2">
-                {validEmails.length > 0 && (
-                  <span id="detected-count-badge" className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-400">
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                    <span>{validEmails.length} email addresses detected</span>
-                  </span>
-                )}
-              </div>
+              {validEmails.length > 0 && (
+                <span id="detected-count-badge" className="inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-800">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  <span>{validEmails.length} email addresses detected</span>
+                </span>
+              )}
             </div>
 
-            {/* File Dropzone */}
+            {/* File Dropzone & Manual Add */}
             <div className="flex flex-col sm:flex-row items-center gap-3">
               <input
                 ref={fileInputRef}
@@ -303,35 +292,33 @@ export function ComposeModal({ isOpen, onClose, onSuccess, onError }: ComposeMod
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-2 rounded-xl border border-dashed border-cyan-500/40 bg-cyan-500/5 px-4 py-2.5 text-xs font-semibold text-cyan-400 hover:bg-cyan-500/10 transition"
+                className="flex items-center gap-2 rounded-xl border border-dashed border-[#5e80c4]/40 bg-[#5e80c4]/10 px-4 py-2 text-xs font-semibold text-[#23456c] hover:bg-[#5e80c4]/20 transition"
               >
-                <Upload className="h-4 w-4" />
+                <Upload className="h-4 w-4 text-[#5e80c4]" />
                 <span>{uploadedFileName ? `Uploaded: ${uploadedFileName}` : 'Upload CSV / TXT file'}</span>
               </button>
 
-              {/* Manual Input Fallback */}
               <div className="flex flex-1 items-center gap-2 w-full">
                 <input
                   type="text"
                   value={manualInput}
                   onChange={(e) => setManualInput(e.target.value)}
-                  placeholder="Or paste emails (comma/newline separated)..."
-                  className="flex-1 rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-cyan-500 focus:outline-none"
+                  placeholder="Or paste email addresses..."
+                  className="flex-1 rounded-xl border border-[#e2deea] bg-[#ffffff] px-3 py-2 text-xs text-[#23456c] placeholder-[#627289] focus:border-[#6e2a7e] focus:outline-none"
                 />
                 <button
                   type="button"
                   onClick={handleAddManualEmails}
-                  className="rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-xs font-medium text-slate-200 hover:bg-slate-700"
+                  className="rounded-xl border border-[#e2deea] bg-[#c7bcd3]/30 px-3 py-2 text-xs font-medium text-[#23456c] hover:bg-[#c7bcd3]/50"
                 >
                   Add
                 </button>
               </div>
             </div>
 
-            {/* Invalid Rows Warning Banner */}
             {invalidRows.length > 0 && (
-              <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 space-y-2">
-                <div className="flex items-center justify-between text-xs text-amber-400">
+              <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 space-y-2">
+                <div className="flex items-center justify-between text-xs text-amber-900">
                   <div className="flex items-center gap-1.5 font-semibold">
                     <AlertCircle className="h-4 w-4" />
                     <span>{invalidRows.length} invalid recipient rows found</span>
@@ -339,26 +326,21 @@ export function ComposeModal({ isOpen, onClose, onSuccess, onError }: ComposeMod
                   <button
                     type="button"
                     onClick={handleRemoveInvalidRows}
-                    className="flex items-center gap-1 rounded-md bg-amber-500/20 px-2 py-1 text-[11px] font-medium text-amber-300 hover:bg-amber-500/30 transition"
+                    className="flex items-center gap-1 rounded-md bg-amber-200/60 px-2 py-1 text-[11px] font-medium text-amber-900 hover:bg-amber-300/60 transition"
                   >
                     <Trash2 className="h-3 w-3" />
                     <span>Remove all invalid rows</span>
                   </button>
                 </div>
-                <div className="max-h-20 overflow-y-auto text-[11px] text-amber-300/80 font-mono space-y-0.5">
-                  {invalidRows.map((row, idx) => (
-                    <div key={idx} className="truncate">• {row}</div>
-                  ))}
-                </div>
               </div>
             )}
           </div>
 
-          {/* Schedule Controls: Start Time, Delay, Hourly Limit */}
+          {/* Schedule Controls */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center gap-1">
-                <Calendar className="h-3.5 w-3.5 text-cyan-400" />
+              <label className="block text-xs font-semibold text-[#23456c] mb-1 flex items-center gap-1">
+                <Calendar className="h-3.5 w-3.5 text-[#6e2a7e]" />
                 <span>Start Time</span>
               </label>
               <input
@@ -367,13 +349,13 @@ export function ComposeModal({ isOpen, onClose, onSuccess, onError }: ComposeMod
                 required
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
-                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2 text-xs text-white focus:border-cyan-500 focus:outline-none"
+                className="w-full rounded-xl border border-[#e2deea] bg-[#f8f7fa] px-3.5 py-2 text-xs text-[#23456c] focus:border-[#6e2a7e] focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center gap-1">
-                <Clock className="h-3.5 w-3.5 text-cyan-400" />
+              <label className="block text-xs font-semibold text-[#23456c] mb-1 flex items-center gap-1">
+                <Clock className="h-3.5 w-3.5 text-[#6e2a7e]" />
                 <span>Delay (Seconds)</span>
               </label>
               <input
@@ -383,13 +365,13 @@ export function ComposeModal({ isOpen, onClose, onSuccess, onError }: ComposeMod
                 required
                 value={delaySeconds}
                 onChange={(e) => setDelaySeconds(Number(e.target.value))}
-                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2 text-xs text-white focus:border-cyan-500 focus:outline-none"
+                className="w-full rounded-xl border border-[#e2deea] bg-[#f8f7fa] px-3.5 py-2 text-xs text-[#23456c] focus:border-[#6e2a7e] focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center gap-1">
-                <Zap className="h-3.5 w-3.5 text-cyan-400" />
+              <label className="block text-xs font-semibold text-[#23456c] mb-1 flex items-center gap-1">
+                <Zap className="h-3.5 w-3.5 text-[#6e2a7e]" />
                 <span>Hourly Limit</span>
               </label>
               <input
@@ -399,17 +381,17 @@ export function ComposeModal({ isOpen, onClose, onSuccess, onError }: ComposeMod
                 required
                 value={hourlyLimit}
                 onChange={(e) => setHourlyLimit(Number(e.target.value))}
-                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2 text-xs text-white focus:border-cyan-500 focus:outline-none"
+                className="w-full rounded-xl border border-[#e2deea] bg-[#f8f7fa] px-3.5 py-2 text-xs text-[#23456c] focus:border-[#6e2a7e] focus:outline-none"
               />
             </div>
           </div>
 
-          {/* Modal Footer Buttons */}
-          <div className="flex items-center justify-end gap-3 border-t border-slate-800 pt-4">
+          {/* Footer Buttons */}
+          <div className="flex items-center justify-end gap-3 border-t border-[#e2deea] pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-2 text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white"
+              className="rounded-xl border border-[#e2deea] bg-[#ffffff] px-4 py-2 text-xs font-medium text-[#23456c] hover:bg-[#f8f7fa]"
             >
               Cancel
             </button>
@@ -417,10 +399,10 @@ export function ComposeModal({ isOpen, onClose, onSuccess, onError }: ComposeMod
               id="submit-batch-btn"
               type="submit"
               disabled={loading || validEmails.length === 0}
-              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-2 text-xs font-semibold text-white shadow-lg shadow-cyan-500/25 transition-all hover:opacity-95 disabled:opacity-50"
+              className="flex items-center gap-2 rounded-xl bg-[#6e2a7e] px-5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[#582165] disabled:opacity-50 transition-all"
             >
               <Send className="h-3.5 w-3.5" />
-              <span>{loading ? 'Scheduling Batch...' : `Schedule ${validEmails.length} Email(s)`}</span>
+              <span>{loading ? 'Scheduling...' : `Schedule ${validEmails.length} Email(s)`}</span>
             </button>
           </div>
         </form>
