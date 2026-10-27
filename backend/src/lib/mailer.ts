@@ -74,6 +74,7 @@ export async function sendEmail({ to, from, subject, html }: SendEmailPayload) {
           to: [to],
           subject: subject,
           html: html,
+          reply_to: from,
         }),
       });
 
