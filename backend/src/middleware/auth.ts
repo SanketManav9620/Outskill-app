@@ -76,9 +76,12 @@ export async function authMiddleware(
 
     // 4. Pass execution to the next middleware or route handler in the chain
     next();
-  } catch (error) {
+  } catch (error: any) {
     console.error('Auth middleware error:', error);
-    res.status(500).json({ error: 'Failed to authenticate stub user' });
+    res.status(500).json({
+      error: 'Failed to authenticate stub user',
+      details: error?.message || String(error),
+    });
   }
 }
 
