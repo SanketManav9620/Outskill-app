@@ -6,6 +6,20 @@ import { DataTable, Column } from './DataTable';
 import { EmailJobItem } from '../app/dashboard/page';
 import { CheckCircle2 } from 'lucide-react';
 
+/**
+ * ============================================================================
+ * SENT EMAILS HISTORY TABLE COMPONENT (components/SentEmailsTable.tsx)
+ * ============================================================================
+ * WHAT THIS FILE DOES:
+ * - Displays successfully delivered email jobs (`status === 'SENT'`).
+ * - Shows recipient, subject snippet, delivery timestamp (`sentAt`), and success badge.
+ * - Auto-refreshes every 5 seconds via SWR to capture newly completed dispatches.
+ * 
+ * CONTROL FLOW:
+ * SWR issues GET `/api/emails?status=sent&limit=50`. Express returns delivered
+ * records, and `DataTable` displays them in descending chronological order.
+ */
+
 const fetcher = async (url: string) => {
   const res = await fetch(url, {
     headers: { 'x-user-id': 'demo-user-id' },
@@ -19,12 +33,15 @@ const fetcher = async (url: string) => {
   return json.data || [];
 };
 
+import { getBackendUrl } from '@/lib/api';
+
 export interface SentEmailsTableProps {
   onError?: (err: Error) => void;
 }
 
+
 export function SentEmailsTable({ onError }: SentEmailsTableProps) {
-  const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  const backendUrl = getBackendUrl();
   const endpoint = `${backendUrl}/api/emails?status=sent&limit=50`;
 
   const { data: rows = [], error, isLoading } = useSWR<EmailJobItem[]>(

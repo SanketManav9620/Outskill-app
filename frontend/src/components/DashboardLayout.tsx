@@ -15,6 +15,24 @@ import {
   Slack,
 } from 'lucide-react';
 
+/**
+ * ============================================================================
+ * DASHBOARD SHELL LAYOUT COMPONENT (components/DashboardLayout.tsx)
+ * ============================================================================
+ * WHAT THIS FILE DOES:
+ * - Provides the primary visual chrome (navigation bar, header, search bar, profile).
+ * - Manages tab switching between 'scheduled', 'sent', and 'failed' queues.
+ * - Displays live Slack workspace connection status with interactive Reconnect button.
+ * - Exposes the "Schedule Email Campaign" action button triggering the ComposeModal.
+ * 
+ * PROPS & INTERFACES:
+ * - activeTab: current active tab state.
+ * - onTabChange: callback fired when user clicks a navigation tab.
+ * - onComposeClick: callback fired when user clicks the "Compose" button.
+ * - onSearchChange: callback fired when user types into the search bar.
+ * - onConnectSlack: initiates the OAuth flow to link team Slack workspace.
+ */
+
 export interface DashboardLayoutProps {
   activeTab: 'scheduled' | 'sent' | 'failed';
   onTabChange: (tab: 'scheduled' | 'sent' | 'failed') => void;
@@ -26,6 +44,7 @@ export interface DashboardLayoutProps {
   slackTeamName?: string | null;
   onConnectSlack?: () => void;
 }
+
 
 export function DashboardLayout({
   activeTab,

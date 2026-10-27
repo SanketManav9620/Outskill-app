@@ -3,6 +3,23 @@
 import React from 'react';
 import { Mail } from 'lucide-react';
 
+/**
+ * ============================================================================
+ * GENERIC REUSABLE DATA TABLE COMPONENT (components/DataTable.tsx)
+ * ============================================================================
+ * WHAT THIS FILE DOES:
+ * - Provides a strongly typed, reusable tabular data viewer.
+ * - Supports custom column cell renderers (`render: (row) => ...`).
+ * - Features animated pulse skeleton loaders when `isLoading === true`.
+ * - Displays an empty state banner with custom icon and guidance text when `rows.length === 0`.
+ * 
+ * PROPS:
+ * - columns: Array of Column definitions (`key`, `header`, optional `render` callback).
+ * - rows: Array of records to display.
+ * - isLoading: Boolean flag to render skeleton loading placeholders.
+ * - emptyMessage: Informational text when no records are found.
+ */
+
 export interface Column<T = any> {
   key: string;
   header: string;
@@ -15,6 +32,7 @@ export interface DataTableProps<T = any> {
   isLoading: boolean;
   emptyMessage?: string;
 }
+
 
 export function DataTable<T = any>({
   columns,

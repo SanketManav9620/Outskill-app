@@ -1,8 +1,18 @@
 import prisma from '../src/lib/prisma';
 import { notifySlackRateLimitHit } from '../src/lib/slack';
 
+/**
+ * ============================================================================
+ * SLACK WEBHOOK ALERT VERIFICATION TEST SUITE (testSlackNotification.ts)
+ * ============================================================================
+ * WHAT THIS SCRIPT DOES:
+ * - Tests both branches of Slack alerting:
+ *     1. User without Slack integration (verifies graceful non-blocking exit).
+ *     2. User with connected Slack incoming webhook (verifies payload format and HTTP POST dispatch).
+ */
 async function runSlackNotificationTest() {
   console.log('🧪 Starting Slack Rate Limit Notification Test...');
+
 
   const originalFetch = global.fetch;
   const originalFindUnique = prisma.sender.findUnique;

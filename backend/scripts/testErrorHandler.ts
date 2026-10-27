@@ -2,8 +2,18 @@ import express, { Request, Response } from 'express';
 import { asyncHandler, AppError, errorHandler } from '../src/middleware/errorHandler';
 import http from 'http';
 
+/**
+ * ============================================================================
+ * ERROR HANDLING SYSTEM TEST SUITE (testErrorHandler.ts)
+ * ============================================================================
+ * WHAT THIS SCRIPT DOES:
+ * - Boots an in-memory Express instance with test endpoints.
+ * - Asserts that `AppError` exceptions return specific status codes and code strings.
+ * - Asserts that generic uncaught errors are converted to uniform 500 INTERNAL_SERVER_ERROR responses.
+ */
 async function runErrorHandlerTests() {
   console.log('🧪 Testing Centralized Express Error-Handling Middleware & AsyncHandler...\n');
+
 
   const app = express();
   app.use(express.json());

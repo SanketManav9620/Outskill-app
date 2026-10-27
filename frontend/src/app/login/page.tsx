@@ -5,19 +5,38 @@ import { signIn, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Mail, ArrowRight } from 'lucide-react';
 
+/**
+ * ============================================================================
+ * LOGIN / AUTHENTICATION PAGE (app/login/page.tsx)
+ * ============================================================================
+ * WHAT THIS FILE DOES:
+ * - Provides the authentication entry point for users.
+ * - Integrates with NextAuth's `signIn` client helper to trigger Google OAuth.
+ * - Monitors session state with `useSession()`: automatically redirects already-authenticated
+ *   users to `/dashboard`.
+ * 
+ * CONTROL FLOW:
+ * 1. User arrives at `/login`.
+ * 2. `useEffect` checks session status. If already 'authenticated', routes directly to `/dashboard`.
+ * 3. If unauthenticated, user clicks "Sign in with Google".
+ * 4. `signIn('google', { callbackUrl: '/dashboard' })` redirects browser to Google OAuth.
+ */
 export default function LoginPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
+  // If already authenticated, skip login and forward user to dashboard
   useEffect(() => {
     if (status === 'authenticated') {
       router.push('/dashboard');
     }
   }, [status, router]);
 
+  // Trigger Google OAuth 2.0 flow
   const handleGoogleSignIn = () => {
     signIn('google', { callbackUrl: '/dashboard' });
   };
+
 
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-[#f8f7fa] px-4 py-12 text-[#23456c]">

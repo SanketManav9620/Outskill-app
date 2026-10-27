@@ -6,6 +6,20 @@ import { DataTable, Column } from './DataTable';
 import { EmailJobItem } from '../app/dashboard/page';
 import { AlertCircle } from 'lucide-react';
 
+/**
+ * ============================================================================
+ * FAILED EMAILS TABLE COMPONENT (components/FailedEmailsTable.tsx)
+ * ============================================================================
+ * WHAT THIS FILE DOES:
+ * - Displays email jobs that permanently failed after exhausting BullMQ retry attempts.
+ * - Displays recipient, subject, the exact failure reason (`errorMessage`), and status.
+ * - Auto-refreshes every 5 seconds via SWR.
+ * 
+ * CONTROL FLOW:
+ * SWR requests GET `/api/emails?status=failed&limit=50`. When the background worker
+ * exhausts 3 attempts and marks a job as FAILED, it surfaces here with error details.
+ */
+
 const fetcher = async (url: string) => {
   const res = await fetch(url, {
     headers: { 'x-user-id': 'demo-user-id' },
@@ -19,12 +33,15 @@ const fetcher = async (url: string) => {
   return json.data || [];
 };
 
+import { getBackendUrl } from '@/lib/api';
+
 export interface FailedEmailsTableProps {
   onError?: (err: Error) => void;
 }
 
+
 export function FailedEmailsTable({ onError }: FailedEmailsTableProps) {
-  const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  const backendUrl = getBackendUrl();
   const endpoint = `${backendUrl}/api/emails?status=failed&limit=50`;
 
   const { data: rows = [], error, isLoading } = useSWR<EmailJobItem[]>(

@@ -2,7 +2,18 @@ import React from 'react';
 import Link from 'next/link';
 import { Send, Zap, Bell, Clock, LayoutDashboard, LogIn, CheckCircle2 } from 'lucide-react';
 
+/**
+ * ============================================================================
+ * LANDING / MARKETING HOMEPAGE (frontend/src/app/page.tsx)
+ * ============================================================================
+ * WHAT THIS FILE DOES:
+ * - Publicly accessible landing page showcasing system capabilities.
+ * - Displays quick links to the dashboard (`/dashboard`) and authentication (`/login`).
+ * - Explains platform features: Batch Scheduling, Hourly Rate Limiting, Slack Alerts,
+ *   and Elasticsearch Queue Tracking.
+ */
 export default function Home() {
+
   return (
     <main className="min-h-screen bg-[#f8f7fa] px-6 py-12 text-[#23456c]">
       <div className="mx-auto max-w-6xl space-y-10">

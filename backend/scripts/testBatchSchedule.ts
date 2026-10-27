@@ -3,8 +3,19 @@ import { emailQueue } from '../src/lib/queue';
 import { EmailJobStatus } from '@prisma/client';
 import { indexEmailJob, esClient } from '../src/lib/elasticsearch';
 
+/**
+ * ============================================================================
+ * BATCH EMAIL SCHEDULING VERIFICATION TEST SUITE (testBatchSchedule.ts)
+ * ============================================================================
+ * WHAT THIS SCRIPT DOES:
+ * - Verifies the end-to-end logic of batch email scheduling.
+ * - Asserts staggered delay computation (`scheduledAt = startTime + i * delaySeconds`).
+ * - Validates deterministic BullMQ job IDs (`email-${id}`) and delay milliseconds.
+ * - Asserts synchronization across PostgreSQL and Elasticsearch.
+ */
 async function runBatchScheduleTest() {
   console.log('🧪 Starting Batch Email Scheduling Test...');
+
 
   const originalIndex = esClient.index;
   const originalAdd = emailQueue.add;

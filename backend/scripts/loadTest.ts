@@ -2,10 +2,21 @@ import prisma from '../src/lib/prisma';
 import { emailQueue, redisConnection } from '../src/lib/queue';
 import { EmailJobStatus } from '@prisma/client';
 
+/**
+ * ============================================================================
+ * HIGH-CONCURRENCY SYSTEM LOAD TEST SUITE (loadTest.ts)
+ * ============================================================================
+ * WHAT THIS SCRIPT DOES:
+ * - Simulates 1000 bulk email jobs across 3 concurrent sender accounts.
+ * - Stresses Redis concurrency, BullMQ queue throughput, and rate limiter throttling.
+ * - Asserts that senders do not exceed their hourly caps under heavy parallel load.
+ */
+
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function runLoadTest() {
   console.log('🚀 Starting System Load & Rate Limiting Test (1000 Emails / 3 Senders)...');
+
 
   const HOURLY_LIMIT_PER_SENDER = 50;
   process.env.MAX_EMAILS_PER_HOUR_PER_SENDER = String(HOURLY_LIMIT_PER_SENDER);

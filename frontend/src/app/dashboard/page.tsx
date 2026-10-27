@@ -7,6 +7,7 @@ import { ScheduledEmailsTable } from '@/components/ScheduledEmailsTable';
 import { SentEmailsTable } from '@/components/SentEmailsTable';
 import { FailedEmailsTable } from '@/components/FailedEmailsTable';
 import { DataTable, Column } from '@/components/DataTable';
+import { getBackendUrl } from '@/lib/api';
 import {
   Clock,
   CheckCircle2,
@@ -18,6 +19,33 @@ import {
   Layers,
 } from 'lucide-react';
 
+/**
+ * ============================================================================
+ * MAIN DASHBOARD PAGE (app/dashboard/page.tsx)
+ * ============================================================================
+ * WHAT THIS FILE DOES:
+ * - Core user dashboard for managing and inspecting all email queue operations.
+ * - Coordinates state between tabs ('scheduled', 'sent', 'failed').
+ * - Runs periodic background polling (every 5 seconds) for real-time queue metrics.
+ * - Manages live full-text search across subject, body, and recipients via Elasticsearch.
+ * - Handles Slack workspace OAuth connection and status reporting.
+ * - Coordinates the "Schedule Campaign" ComposeModal dialog.
+ * 
+ * COMPONENT LIFECYCLE & DATA FLOW:
+ * 1. On Mount:
+ *    - `fetchMetrics()` queries backend for scheduled, sent, and failed job counts.
+ *    - `checkSlackStatus()` calls `/api/slack/status` to display the Slack badge.
+ * 2. Tab Navigation:
+ *    - Switching tabs alters `activeTab`, dynamically mounting the corresponding table.
+ * 3. Search:
+ *    - As the user types into the header search input, `executeSearch()` calls
+ *      `/api/emails/search?q=...&status=...` and renders filtered results.
+ * 4. Scheduling Campaign:
+ *    - Clicking "Schedule Campaign" opens `ComposeModal`. On submit, success toast
+ *      appears and metrics auto-refresh.
+ */
+
+// Interface matching the backend EmailJob JSON response contract
 export interface EmailJobItem {
   id: string;
   subject: string;
@@ -36,26 +64,46 @@ export interface EmailJobItem {
 }
 
 export default function DashboardPage() {
+  // Navigation & Tab State
   const [activeTab, setActiveTab] = useState<'scheduled' | 'sent' | 'failed'>('scheduled');
+  
+  // Search State
   const [searchQuery, setSearchQuery] = useState('');
-  const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [searchResults, setSearchResults] = useState<EmailJobItem[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [slackConnected, setSlackConnected] = useState(false);
-  const [slackTeamName, setSlackTeamName] = useState<string | null>(null);
+
+  // Modal & Toast UI State
+  const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastError, setToastError] = useState<string | null>(null);
 
-  // Live Metrics State
+  // Slack Integration State
+  const [slackConnected, setSlackConnected] = useState(false);
+  const [slackTeamName, setSlackTeamName] = useState<string | null>(null);
+
+  // Live Metrics State (Cards on top of dashboard)
   const [metrics, setMetrics] = useState({
     scheduledCount: 0,
     sentCount: 0,
     failedCount: 0,
   });
 
+  /**
+   * fetchMetrics()
+   * 
+   * TASK / PURPOSE:
+   * Concurrently queries backend email endpoints to tally count of scheduled, sent, and failed jobs.
+   * 
+   * WHEN REQUEST REACHES HERE:
+   * Called on initial mount and every 5 seconds via setInterval.
+   * 
+   * HOW IT GENERATES DATA:
+   * Issues `Promise.all` fetching `/api/emails?status=...&limit=1` for all 3 statuses.
+   * Updates `metrics` state hook to trigger React re-render.
+   */
   const fetchMetrics = useCallback(async () => {
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const backendUrl = getBackendUrl();
       const [schedRes, sentRes, failRes] = await Promise.all([
         fetch(`${backendUrl}/api/emails?status=scheduled&limit=1`, { headers: { 'x-user-id': 'demo-user-id' } }),
         fetch(`${backendUrl}/api/emails?status=sent&limit=1`, { headers: { 'x-user-id': 'demo-user-id' } }),
@@ -79,20 +127,23 @@ export default function DashboardPage() {
     }
   }, []);
 
+  // Poll metrics every 5 seconds
   useEffect(() => {
     fetchMetrics();
     const interval = setInterval(fetchMetrics, 5000);
     return () => clearInterval(interval);
   }, [fetchMetrics]);
 
+  // Handler invoked when ComposeModal successfully schedules jobs
   const handleComposeSuccess = (count: number) => {
     setToastMessage(`Successfully scheduled ${count} email job(s)!`);
-    fetchMetrics();
+    fetchMetrics(); // Refresh live counters
     setTimeout(() => {
       setToastMessage(null);
     }, 5000);
   };
 
+  // Centralized toast error presenter
   const handleFetchError = (err: Error) => {
     setToastError(`Error: ${err.message || 'An unexpected error occurred'}`);
     setTimeout(() => {
@@ -100,6 +151,15 @@ export default function DashboardPage() {
     }, 5000);
   };
 
+  /**
+   * executeSearch()
+   * 
+   * TASK / PURPOSE:
+   * Executes full-text search against the backend `/api/emails/search` endpoint.
+   * 
+   * WHEN REQUEST REACHES HERE:
+   * Called whenever `searchQuery` or `activeTab` changes.
+   */
   const executeSearch = useCallback(async () => {
     if (!searchQuery.trim()) {
       setSearchResults([]);
@@ -108,7 +168,7 @@ export default function DashboardPage() {
 
     setIsSearching(true);
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const backendUrl = getBackendUrl();
       const url = `${backendUrl}/api/emails/search?q=${encodeURIComponent(searchQuery)}&status=${activeTab}`;
       const res = await fetch(url, {
         headers: { 'x-user-id': 'demo-user-id' },
@@ -128,9 +188,10 @@ export default function DashboardPage() {
     }
   }, [searchQuery, activeTab]);
 
+
   const checkSlackStatus = useCallback(async () => {
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const backendUrl = getBackendUrl();
       const res = await fetch(`${backendUrl}/api/slack/status`, {
         headers: { 'x-user-id': 'demo-user-id' },
       });
@@ -153,7 +214,7 @@ export default function DashboardPage() {
   }, [executeSearch]);
 
   const handleConnectSlack = () => {
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    const backendUrl = getBackendUrl();
     window.location.href = `${backendUrl}/auth/slack/start`;
   };
 

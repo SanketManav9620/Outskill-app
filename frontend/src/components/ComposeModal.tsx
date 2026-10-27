@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import Papa from 'papaparse';
+import { getBackendUrl } from '@/lib/api';
 import {
   X,
   Send,
@@ -16,6 +17,23 @@ import {
   Zap,
 } from 'lucide-react';
 
+/**
+ * ============================================================================
+ * COMPOSE & BATCH SCHEDULE MODAL COMPONENT (components/ComposeModal.tsx)
+ * ============================================================================
+ * WHAT THIS FILE DOES:
+ * - Interactive modal dialog to compose and dispatch email campaigns.
+ * - Supports batch recipient importing via CSV or TXT file uploads (via `papaparse`).
+ * - Performs client-side regex email validation, separating valid emails from invalid lines.
+ * - Allows manual email list entry (comma/newline separated).
+ * - Exposes campaign scheduling options:
+ *     1. Start Time (`startTime`): scheduled timestamp.
+ *     2. Stagger Delay (`delaySeconds`): delay between consecutive emails.
+ *     3. Hourly Rate Limit (`hourlyLimit`): sender throttling ceiling.
+ * - Submits payload to POST `/api/emails/schedule-batch`.
+ * - Fires `onSuccess(count)` to trigger metrics refresh and close modal.
+ */
+
 export interface ComposeModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -23,29 +41,41 @@ export interface ComposeModalProps {
   onError?: (errorMsg: string) => void;
 }
 
+// RFC 5322 compliant email regex for client-side sanity checking
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function ComposeModal({ isOpen, onClose, onSuccess, onError }: ComposeModalProps) {
+  // Form Input States
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [senderId, setSenderId] = useState('sender-default-1');
   const [startTime, setStartTime] = useState(
-    new Date(Date.now() + 60000).toISOString().slice(0, 16)
+    new Date(Date.now() + 60000).toISOString().slice(0, 16) // Default 1 minute in future
   );
   const [delaySeconds, setDelaySeconds] = useState(2);
   const [hourlyLimit, setHourlyLimit] = useState(100);
 
+  // Recipient Processing States
   const [validEmails, setValidEmails] = useState<string[]>([]);
   const [invalidRows, setInvalidRows] = useState<string[]>([]);
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
-  
   const [manualInput, setManualInput] = useState('');
+
+  // UI Status States
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Guard: If modal is not open, render nothing to save DOM resources
   if (!isOpen) return null;
 
+  /**
+   * processEmailList()
+   * 
+   * TASK / PURPOSE:
+   * Takes a raw array of email strings, validates each against EMAIL_REGEX,
+   * deduplicates entries, and separates them into `validEmails` and `invalidRows`.
+   */
   const processEmailList = (rawList: string[]) => {
     const valid: string[] = [];
     const invalid: string[] = [];
@@ -69,6 +99,13 @@ export function ComposeModal({ isOpen, onClose, onSuccess, onError }: ComposeMod
     setInvalidRows((prev) => Array.from(new Set([...prev, ...invalid])));
   };
 
+  /**
+   * handleFileUpload()
+   * 
+   * TASK / PURPOSE:
+   * Handles user file selection for .csv or .txt files.
+   * Uses Papa.parse for structured CSV matrices, or FileReader for plain text lines.
+   */
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -79,6 +116,7 @@ export function ComposeModal({ isOpen, onClose, onSuccess, onError }: ComposeMod
     const isCsv = file.name.endsWith('.csv');
 
     if (isCsv) {
+      // Parse CSV asynchronously using Papaparse
       Papa.parse(file, {
         complete: (results) => {
           const rawEntries: string[] = [];
@@ -100,6 +138,7 @@ export function ComposeModal({ isOpen, onClose, onSuccess, onError }: ComposeMod
         },
       });
     } else {
+      // Read plain text file line by line
       const reader = new FileReader();
       reader.onload = (event) => {
         const content = event.target?.result as string;
@@ -112,6 +151,7 @@ export function ComposeModal({ isOpen, onClose, onSuccess, onError }: ComposeMod
     }
   };
 
+  // Parses manually typed or pasted comma/newline-delimited emails
   const handleAddManualEmails = () => {
     if (!manualInput.trim()) return;
     const entries = manualInput.split(/[\n,;]/);
@@ -119,10 +159,26 @@ export function ComposeModal({ isOpen, onClose, onSuccess, onError }: ComposeMod
     setManualInput('');
   };
 
+  // Clears invalid email lines from preview
   const handleRemoveInvalidRows = () => {
     setInvalidRows([]);
   };
 
+  /**
+   * handleSubmit()
+   * 
+   * TASK / PURPOSE:
+   * Submits the campaign payload to the backend REST API (`POST /api/emails/schedule-batch`).
+   * 
+   * CONTROL FLOW:
+   * 1. Validates that at least 1 valid recipient email is queued.
+   * 2. Sets loading state and issues HTTP POST fetch request with `x-user-id` header.
+   * 3. On success (HTTP 201):
+   *    - Clears all form fields.
+   *    - Invokes `onSuccess(count)` callback to alert the parent dashboard.
+   *    - Closes modal via `onClose()`.
+   * 4. On error: displays friendly error message.
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validEmails.length === 0) {
@@ -136,7 +192,7 @@ export function ComposeModal({ isOpen, onClose, onSuccess, onError }: ComposeMod
     setError(null);
 
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const backendUrl = getBackendUrl();
       const res = await fetch(`${backendUrl}/api/emails/schedule-batch`, {
         method: 'POST',
         headers: {
@@ -163,6 +219,7 @@ export function ComposeModal({ isOpen, onClose, onSuccess, onError }: ComposeMod
       const responseData = await res.json();
       const count = responseData.count || validEmails.length;
 
+      // Reset form state
       setSubject('');
       setBody('');
       setValidEmails([]);
@@ -179,6 +236,7 @@ export function ComposeModal({ isOpen, onClose, onSuccess, onError }: ComposeMod
       setLoading(false);
     }
   };
+
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#23456c]/30 p-4 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto">

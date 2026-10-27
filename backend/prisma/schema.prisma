@@ -1,5 +1,30 @@
 // backend/prisma/schema.prisma
 
+/**
+ * ============================================================================
+ * PRISMA DATABASE SCHEMA DEFINITION (schema.prisma)
+ * ============================================================================
+ * WHAT THIS FILE DOES:
+ * - Defines the PostgreSQL database schema for the Outskill platform.
+ * - Configures database tables, columns, constraints, foreign keys, and indexes.
+ * - Auto-generates type-safe TypeScript models via `@prisma/client`.
+ * 
+ * ARCHITECTURAL DESIGN & DATABASE INDEXING (INTERVIEW CONCEPTS):
+ * 1. UUID Primary Keys (`@default(uuid())`):
+ *    Avoids predictable incremental IDs (prevents enumeration attacks) and allows
+ *    distributed ID generation across multiple backend services without collisions.
+ * 
+ * 2. Status Indexes (`@@index([status])`, `@@index([scheduledAt])`, `@@index([senderId, status])`):
+ *    - `@@index([status])`: Dramatically accelerates queries for `status = 'SCHEDULED'`, `SENT`, or `FAILED`.
+ *    - `@@index([scheduledAt])`: Speeds up time-range queries and reconciliation sweeps.
+ *    - `@@index([senderId, status])`: Compound index enabling instant filtering of jobs belonging
+ *      to a specific sender in a particular state.
+ * 
+ * 3. Cascade Deletions (`onDelete: Cascade`):
+ *    When a User or Sender is deleted, all their associated EmailJobs and SlackIntegrations
+ *    are automatically cleaned up, preventing orphaned records.
+ */
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,12 +34,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Enum defining the 3 lifecycle states of an email job
 enum EmailJobStatus {
-  SCHEDULED
-  SENT
-  FAILED
+  SCHEDULED // Waiting in Redis queue or delayed until scheduled time
+  SENT      // Successfully delivered via SMTP
+  FAILED    // Permanently failed after exhausting all retry attempts
 }
 
+// User model representing application users authenticated via Google OAuth
 model User {
   id                String             @id @default(uuid())
   googleId          String?            @unique
@@ -22,21 +49,23 @@ model User {
   name              String?
   avatarUrl         String?
   createdAt         DateTime           @default(now())
-  senders           Sender[]
-  emailJobs         EmailJob[]
-  slackIntegrations SlackIntegration[]
+  senders           Sender[]           // One-to-many relationship with senders
+  emailJobs         EmailJob[]         // One-to-many relationship with email jobs
+  slackIntegrations SlackIntegration[] // One-to-many relationship with Slack workspaces
 }
 
+// Sender account model (e.g. sales@company.com, support@company.com)
 model Sender {
   id        String     @id @default(uuid())
   userId    String
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name      String
-  fromEmail String
+  name      String     // Display name (e.g. "Acme Support")
+  fromEmail String     // Sender email address
   createdAt DateTime   @default(now())
-  emailJobs EmailJob[]
+  emailJobs EmailJob[] // Relational link to all dispatched/scheduled jobs
 }
 
+// Primary email dispatch record
 model EmailJob {
   id             String         @id @default(uuid())
   userId         String
@@ -46,26 +75,29 @@ model EmailJob {
   subject        String
   body           String
   recipientEmail String
-  scheduledAt    DateTime
+  scheduledAt    DateTime       // Target timestamp when this email should be sent
   status         EmailJobStatus @default(SCHEDULED)
-  sentAt         DateTime?
-  errorMessage   String?
-  bullJobId      String?
+  sentAt         DateTime?      // Actual delivery timestamp
+  errorMessage   String?        // Recorded reason if all retry attempts fail
+  bullJobId      String?        // Correlating job ID inside BullMQ / Redis
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
+  // Performance Indexes for fast query resolution
   @@index([status])
   @@index([scheduledAt])
   @@index([senderId, status])
 }
 
+// Slack workspace integration storing OAuth v2 tokens and incoming webhooks
 model SlackIntegration {
   id                 String   @id @default(uuid())
   userId             String
   user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  teamId             String
-  accessToken        String
-  incomingWebhookUrl String?
-  channelId          String?
+  teamId             String   // Slack Workspace Team ID
+  accessToken        String   // Slack OAuth bot/user token
+  incomingWebhookUrl String?  // Webhook URL used to post rate-limit notifications
+  channelId          String?  // Target channel ID
   connectedAt        DateTime @default(now())
 }
+

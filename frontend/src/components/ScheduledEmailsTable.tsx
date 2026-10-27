@@ -6,6 +6,24 @@ import { DataTable, Column } from './DataTable';
 import { EmailJobItem } from '../app/dashboard/page';
 import { Clock } from 'lucide-react';
 
+/**
+ * ============================================================================
+ * SCHEDULED EMAILS QUEUE TABLE COMPONENT (components/ScheduledEmailsTable.tsx)
+ * ============================================================================
+ * WHAT THIS FILE DOES:
+ * - Displays all pending/delayed email jobs waiting in the queue.
+ * - Uses SWR (Stale-While-Revalidate) for reactive client data fetching.
+ * - Auto-refreshes every 5 seconds (`refreshInterval: 5000`) so user sees jobs
+ *   leave the queue in real-time when the background worker processes them.
+ * 
+ * CONTROL FLOW:
+ * 1. Component mounts in DashboardLayout when activeTab === 'scheduled'.
+ * 2. SWR calls `fetcher(endpoint)` with `x-user-id` header.
+ * 3. Express API returns matching `SCHEDULED` EmailJob records.
+ * 4. Component maps data to columns (Recipient, Subject, Scheduled Time, Status badge)
+ *    and renders via `<DataTable>`.
+ */
+
 const fetcher = async (url: string) => {
   const res = await fetch(url, {
     headers: { 'x-user-id': 'demo-user-id' },
@@ -19,12 +37,15 @@ const fetcher = async (url: string) => {
   return json.data || [];
 };
 
+import { getBackendUrl } from '@/lib/api';
+
 export interface ScheduledEmailsTableProps {
   onError?: (err: Error) => void;
 }
 
+
 export function ScheduledEmailsTable({ onError }: ScheduledEmailsTableProps) {
-  const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  const backendUrl = getBackendUrl();
   const endpoint = `${backendUrl}/api/emails?status=scheduled&limit=50`;
 
   const { data: rows = [], error, isLoading } = useSWR<EmailJobItem[]>(

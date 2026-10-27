@@ -1,8 +1,18 @@
 import { esClient, ensureEmailsIndex, indexEmailJob, EMAILS_INDEX } from '../src/lib/elasticsearch';
 import prisma from '../src/lib/prisma';
 
+/**
+ * ============================================================================
+ * ELASTICSEARCH INDEXING & SEARCH TEST SUITE (testElasticsearch.ts)
+ * ============================================================================
+ * WHAT THIS SCRIPT DOES:
+ * - Validates index creation with custom type mappings.
+ * - Asserts document upserting when jobs change states.
+ * - Tests full-text search multi_match queries against recipient, subject, and body.
+ */
 async function runElasticsearchTest() {
   console.log('🧪 Starting Elasticsearch Indexing & Search Test...');
+
 
   const originalIndicesExists = esClient.indices.exists;
   const originalIndicesCreate = esClient.indices.create;

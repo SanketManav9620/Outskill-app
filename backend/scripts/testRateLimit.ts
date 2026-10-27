@@ -3,6 +3,18 @@ import { emailQueue, redisConnection } from '../src/lib/queue';
 import { EmailJobStatus } from '@prisma/client';
 import { emailWorker } from '../src/worker';
 
+/**
+ * ============================================================================
+ * DISTRIBUTED REDIS RATE LIMIT VERIFICATION TEST SUITE (testRateLimit.ts)
+ * ============================================================================
+ * WHAT THIS SCRIPT DOES:
+ * - Configures a low hourly cap (3 emails/hour) for testing.
+ * - Schedules 5 emails for the same sender.
+ * - Verifies that the first 3 emails are processed.
+ * - Verifies that emails 4 and 5 trigger rate limit throttling, rollback Redis counters,
+ *   and are cleanly postponed to the next hour window via `moveToDelayed`.
+ */
+
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function runRateLimitTest() {
@@ -11,6 +23,7 @@ async function runRateLimitTest() {
   // Set environment variable limit to 3 emails per hour for this test process
   process.env.MAX_EMAILS_PER_HOUR_PER_SENDER = '3';
   process.env.MIN_DELAY_MS = '100';
+
 
   const testUserId = `user-ratelimit-test-${Date.now()}`;
   const testSenderId = `sender-ratelimit-test-${Date.now()}`;
