@@ -31,6 +31,10 @@ export const redisConnection = new Redis(env.REDIS_URL, {
   maxRetriesPerRequest: null,
 });
 
+redisConnection.on('error', (err) => {
+  console.error('❌ Redis Connection Error:', err.message);
+});
+
 // Primary email dispatch queue
 export const emailQueue = new Queue('email-send', {
   connection: redisConnection,
@@ -46,5 +50,9 @@ export const emailQueue = new Queue('email-send', {
     removeOnComplete: false,
     removeOnFail: false,
   },
+});
+
+emailQueue.on('error', (err) => {
+  console.error('❌ BullMQ Queue Error:', err.message);
 });
 

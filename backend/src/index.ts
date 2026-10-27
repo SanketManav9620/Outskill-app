@@ -11,6 +11,8 @@ import { ExpressAdapter } from '@bull-board/express';
 import { emailQueue } from './lib/queue';
 import { ensureEmailsIndex } from './lib/elasticsearch';
 import { errorHandler } from './middleware/errorHandler';
+// Import standalone BullMQ worker so jobs are processed and emails are delivered
+import './worker';
 
 /**
  * ============================================================================

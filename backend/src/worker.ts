@@ -243,6 +243,10 @@ export const emailWorker = new Worker<EmailJobData>(
  * Event: 'completed'
  * Fired when a job successfully completes its execution without errors.
  */
+emailWorker.on('error', (err: Error) => {
+  console.error('❌ BullMQ Worker Error:', err.message);
+});
+
 emailWorker.on('completed', (job: Job<EmailJobData>) => {
   console.log(`🎉 Job ${job.id} completed successfully`);
 });
