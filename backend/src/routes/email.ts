@@ -421,6 +421,7 @@ router.get(
     // 3. Return paginated response
     res.json({
       data,
+      totalCount: total,
       pagination: {
         total,
         page,

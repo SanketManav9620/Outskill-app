@@ -117,9 +117,9 @@ export default function DashboardPage() {
           failRes.json(),
         ]);
         setMetrics({
-          scheduledCount: schedData.totalCount ?? (schedData.data?.length || 0),
-          sentCount: sentData.totalCount ?? (sentData.data?.length || 0),
-          failedCount: failData.totalCount ?? (failData.data?.length || 0),
+          scheduledCount: schedData.pagination?.total ?? schedData.totalCount ?? (schedData.data?.length || 0),
+          sentCount: sentData.pagination?.total ?? sentData.totalCount ?? (sentData.data?.length || 0),
+          failedCount: failData.pagination?.total ?? failData.totalCount ?? (failData.data?.length || 0),
         });
       }
     } catch (err) {

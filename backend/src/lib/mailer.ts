@@ -15,9 +15,15 @@ import { env } from '../env';
  * This guarantees safe testing without spamming real user inboxes or blacklisting IP addresses.
  */
 
+// Ensure host is a valid domain hostname and not accidentally an email address
+const smtpHost =
+  env.ETHEREAL_HOST && !env.ETHEREAL_HOST.includes('@')
+    ? env.ETHEREAL_HOST
+    : 'smtp.ethereal.email';
+
 // Configure SMTP transport with host, port, and authentication credentials
 export const transporter = nodemailer.createTransport({
-  host: env.ETHEREAL_HOST,
+  host: smtpHost,
   port: env.ETHEREAL_PORT,
   secure: false, // Port 587 uses STARTTLS rather than immediate SSL
   auth: {
