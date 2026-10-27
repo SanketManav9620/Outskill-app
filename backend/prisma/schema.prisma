@@ -1,29 +1,20 @@
 // backend/prisma/schema.prisma
 
-/**
- * ============================================================================
- * PRISMA DATABASE SCHEMA DEFINITION (schema.prisma)
- * ============================================================================
- * WHAT THIS FILE DOES:
- * - Defines the PostgreSQL database schema for the Outskill platform.
- * - Configures database tables, columns, constraints, foreign keys, and indexes.
- * - Auto-generates type-safe TypeScript models via `@prisma/client`.
- * 
- * ARCHITECTURAL DESIGN & DATABASE INDEXING (INTERVIEW CONCEPTS):
- * 1. UUID Primary Keys (`@default(uuid())`):
- *    Avoids predictable incremental IDs (prevents enumeration attacks) and allows
- *    distributed ID generation across multiple backend services without collisions.
- * 
- * 2. Status Indexes (`@@index([status])`, `@@index([scheduledAt])`, `@@index([senderId, status])`):
- *    - `@@index([status])`: Dramatically accelerates queries for `status = 'SCHEDULED'`, `SENT`, or `FAILED`.
- *    - `@@index([scheduledAt])`: Speeds up time-range queries and reconciliation sweeps.
- *    - `@@index([senderId, status])`: Compound index enabling instant filtering of jobs belonging
- *      to a specific sender in a particular state.
- * 
- * 3. Cascade Deletions (`onDelete: Cascade`):
- *    When a User or Sender is deleted, all their associated EmailJobs and SlackIntegrations
- *    are automatically cleaned up, preventing orphaned records.
- */
+// ============================================================================
+// PRISMA DATABASE SCHEMA DEFINITION (schema.prisma)
+// ============================================================================
+// WHAT THIS FILE DOES:
+// - Defines the PostgreSQL database schema for the Outskill platform.
+// - Configures database tables, columns, constraints, foreign keys, and indexes.
+// - Auto-generates type-safe TypeScript models via `@prisma/client`.
+// 
+// ARCHITECTURAL DESIGN & DATABASE INDEXING:
+// 1. UUID Primary Keys (@default(uuid())):
+//    Avoids predictable incremental IDs and allows distributed ID generation.
+// 2. Status Indexes (@@index([status]), @@index([scheduledAt]), @@index([senderId, status])):
+//    Dramatically accelerates queries for status, time range, and sender-specific jobs.
+// 3. Cascade Deletions (onDelete: Cascade):
+//    Clean deletion of dependent EmailJobs and SlackIntegrations.
 
 generator client {
   provider = "prisma-client-js"
