@@ -2,7 +2,8 @@ import { Router, Response } from 'express';
 import { AuthenticatedRequest } from '../middleware/auth';
 import { createEmailSchema, getEmailsQuerySchema, scheduleBatchEmailSchema } from '../schemas/email';
 import prisma from '../lib/prisma';
-import { emailQueue } from '../lib/queue';
+import { emailQueue, redisConnection } from '../lib/queue';
+import { reconcileScheduledJobs } from '../worker';
 import { EmailJobStatus } from '@prisma/client';
 import { indexEmailJob, esClient, EMAILS_INDEX } from '../lib/elasticsearch';
 import { asyncHandler, AppError } from '../middleware/errorHandler';
@@ -132,6 +133,37 @@ router.post(
         scheduledCount: createdJobs.length,
         jobs: createdJobs,
       },
+    });
+  })
+);
+
+/**
+ * POST /api/emails/reset-queue
+ * 
+ * Flushes stale/corrupted BullMQ queue keys from Redis and re-enqueues
+ * all pending SCHEDULED jobs from PostgreSQL for immediate dispatch.
+ */
+router.post(
+  '/reset-queue',
+  asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    // 1. Fetch all keys matching bull:email-send*
+    const keys = await redisConnection.keys('bull:email-send*');
+    if (keys.length > 0) {
+      await redisConnection.del(...keys);
+    }
+
+    // 2. Clear bullJobId on all currently SCHEDULED email jobs
+    await prisma.emailJob.updateMany({
+      where: { status: EmailJobStatus.SCHEDULED },
+      data: { bullJobId: null },
+    });
+
+    // 3. Trigger reconciliation to re-enqueue clean BullMQ jobs
+    await reconcileScheduledJobs();
+
+    res.json({
+      success: true,
+      message: `Cleaned ${keys.length} queue keys and re-queued pending scheduled jobs.`,
     });
   })
 );
