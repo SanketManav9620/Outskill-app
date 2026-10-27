@@ -58,6 +58,42 @@ export interface SendEmailPayload {
  *    gracefully completes delivery simulation so jobs are delivered on time without hanging.
  */
 export async function sendEmail({ to, from, subject, html }: SendEmailPayload) {
+  // 1. If RESEND_API_KEY is configured, send real emails via Resend HTTPS REST API (Port 443).
+  // This completely bypasses Render's outbound SMTP port blocking!
+  if (process.env.RESEND_API_KEY) {
+    try {
+      const resendSender = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+      const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: resendSender,
+          to: [to],
+          subject: subject,
+          html: html,
+        }),
+      });
+
+      const data = (await response.json()) as any;
+      if (!response.ok) {
+        throw new Error(data.message || `Resend API error: ${response.statusText}`);
+      }
+
+      console.log(`🚀 [Resend HTTPS] Successfully sent real email to ${to} (ID: ${data.id})`);
+      return {
+        messageId: data.id,
+        response: '250 OK: Delivered via Resend HTTPS API',
+      };
+    } catch (apiError: any) {
+      console.error('❌ Resend API delivery failed:', apiError.message);
+      throw apiError;
+    }
+  }
+
+  // 2. Default SMTP transport (Ethereal) with Render firewall fallback
   try {
     const info = await transporter.sendMail({
       from,
